@@ -1,8 +1,6 @@
 const db = require('../config/db');
 const User = db.User;
-const enumStatus = require('../enumerators/enumStatus')
-const errorModel = require('../models/internal/error.model');
-const successModel = require('../models/internal/success.model');
+const enumStatus = require('../enumerators/enumStatus');
 
 /**
  * @method
@@ -10,10 +8,17 @@ const successModel = require('../models/internal/success.model');
  * @returns {Promise<*>}
  */
 const getAllUsersService = async function () {
-    return await User
-        .find()
-        .select('first_name last_name email phone status id document_type document_id address')
+    try{
+        return await User
+        .find({status: enumStatus.ACTIVE})
+        .select('first_name last_name email phone id document_type document_id address')
         .exec();
+    }catch (err) {
+        if (!err.code) {
+            throw {code: 500, message:  'Error interno del servidor. Por favor intenta nuevamente.'};
+        }
+        throw err;
+    }
 };
 
 /**
@@ -31,27 +36,28 @@ const createUserService = async function (userParam, next) {
                 { document_id: userParam.document_id },
                 { phone: userParam.phone }
             ],
+            status: enumStatus.ACTIVE
         });
 
         if (existingUser) {
             if (existingUser.email === userParam.email) {
-                return new errorModel(409, 'Lo sentimos, el correo ya se encuentra registrado.', null );
+                throw  {code: 409, message: 'Lo sentimos, el correo ya se encuentra registrado.'};
             }
             if (existingUser.document_id === userParam.document_id) {
-                return new errorModel(409, 'Lo sentimos, el número de identificación ya se encuentra registrado.', null );
+                throw  {code: 409, message: 'Lo sentimos, el número de identificación ya se encuentra registrado.'};
             }
             if (existingUser.phone === userParam.phone) {
-                return new errorModel(409, 'Lo sentimos, el número telefónico ya se encuentra registrado.', null );
+                throw  {code: 409, message: 'Lo sentimos, el número telefónico ya se encuentra registrado.'};
             }
         }
 
         const user = new User(userParam);
-        user.status = enumStatus.ACTIVO;
+        user.status = enumStatus.ACTIVE;
         const savedUser = await user.save();
-        return new successModel(201,'Usuario creado correctamente' ,savedUser._id);
+        return savedUser._id;
     } catch (err) {
         if (!err.code) {
-            return new errorModel(500, 'Error interno del servidor. Por favor intenta nuevamente.', null);
+            throw {code: 500, message:  'Error interno del servidor. Por favor intenta nuevamente.'};
         }
         throw err;
     }
@@ -64,12 +70,11 @@ const createUserService = async function (userParam, next) {
  * @returns {Promise<*>}
  */
 const getUserByEmailService = async function (email) {
-    const user = await User.findOne({ email: email })
-        .select('first_name last_name email phone status id document_type document_id address')
+    const user = await User.findOne({ email: email, status: enumStatus.ACTIVE})
+        .select('first_name last_name email phone id document_type document_id address')
         .exec();
-
     if (!user) {
-        throw { code: 404, message: 'User ' + email + ' does not exist' };
+        throw { code: 404, message: 'Lo sentimos, el usuario no existe.' };
     }
     return user;
 };
@@ -82,17 +87,19 @@ const getUserByEmailService = async function (email) {
  * @returns {Promise<*>}
  */
 const updateUserByEmailService = async function (email, userParam) {
-    const userForUpdate = await User.findOne({ email: email, status: true });
+    const userForUpdate = await User.findOne({ email: email, status: enumStatus.ACTIVE });
 
     if (!userForUpdate) {
-        throw { code: 404, message: 'User ' + email + ' does not exist' };
+        throw { code: 404, message: 'Lo sentimos, el usuario no existe' };
     }
 
     const userUpdatedResult = await User
         .findByIdAndUpdate(userForUpdate.id,
             {
                 first_name: userParam.first_name,
-                last_name: userParam.last_name, phone: userParam.phone
+                last_name: userParam.last_name,
+                phone: userParam.phone,
+                address: userParam.address
             });
 
     if (userUpdatedResult && userUpdatedResult.errors) {
@@ -109,15 +116,15 @@ const updateUserByEmailService = async function (email, userParam) {
  * @returns {Promise<*>}
  */
 const deleteUserByEmailService = async function (email) {
-    const userForSoftDelete = await User.findOne({ email: email, status: true });
+    const userForSoftDelete = await User.findOne({ email: email, status: enumStatus.ACTIVE });
 
     if (!userForSoftDelete) {
-        throw { code: 404, message: 'User ' + email + ' does not exist' };
+        throw { code: 404, message: 'Lo sentimos, el usuario no existe.'};
     }
 
     const userSoftDeleteResult = await User
         .findByIdAndUpdate(userForSoftDelete.id,
-            { status: false });
+            { status: enumStatus.DELETE });
 
     if (userSoftDeleteResult && userSoftDeleteResult.errors) {
         throw { code: 400, message: userSoftDeleteResult.errors };

@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 
 const userServices = require('../services/users.service');
+const verifyToken = require('../middlewares/authMiddleware');
+
+const errorModel = require('../models/internal/error.model');
+const successModel = require('../models/internal/success.model');
+
+
 
 /**
  * @method
@@ -11,10 +17,10 @@ const userServices = require('../services/users.service');
  * @param res
  * @param next
  */
-const getAllUsersController = function (req, res, next) {
-  userServices.getAllUsersService()
-    .then(users => res.json(users))
-    .catch(err => next(JSON.stringify(err)));
+const getAllUsersController = async function (req, res, next) {
+  await userServices.getAllUsersService()
+    .then(users => res.status(200).json(new successModel(200, null, users)))
+    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
 };
 
 /**
@@ -27,8 +33,8 @@ const getAllUsersController = function (req, res, next) {
  */
 const createUserController = async function (req, res, next) {
   await userServices.createUserService(req.body)
-    .then(user => res.status(user.code).json(user))
-    .catch(err => next(JSON.stringify(err)));
+    .then(user => res.status(201).json(new successModel(201, 'Usuario creado correctamente.', user)))
+    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
 };
 
 /**
@@ -39,10 +45,10 @@ const createUserController = async function (req, res, next) {
  * @param res
  * @param next
  */
-const getUserByEmailController = function (req, res, next) {
-  userServices.getUserByEmailService(req.params.email)
-    .then(user => res.json(user))
-    .catch(err => next(JSON.stringify(err)));
+const getUserByEmailController = async function (req, res, next) {
+  await userServices.getUserByEmailService(req.params.email)
+    .then(user => res.status(200).json(new successModel(200, null, user)))
+    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
 };
 
 /**
@@ -53,9 +59,9 @@ const getUserByEmailController = function (req, res, next) {
  * @param res
  * @param next
  */
-const updateUserByEmailController = function (req, res) {
-  userServices.updateUserByEmailService(req.params.email, req.body)
-    .then(user => res.json(user))
+const updateUserByEmailController = async function (req, res) {
+  await userServices.updateUserByEmailService(req.params.email, req.body)
+    .then(user => res.status(200).json(new successModel(200, 'Usuario editado correctamente.', user)))
     .catch(err => next(JSON.stringify(err)));
 };
 
@@ -67,20 +73,20 @@ const updateUserByEmailController = function (req, res) {
  * @param res
  * @param next
  */
-const deleteUserByEmailController = function (req, res, next) {
-  return userServices.deleteUserByEmailService(req.params.email)
+const deleteUserByEmailController = async function (req, res, next) {
+  await userServices.deleteUserByEmailService(req.params.email)
     .then(() => res.sendStatus(204))
-    .catch(err => next(JSON.stringify(err)));
+    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
 };
 
 /**
  * @description This definition section is responsible for indicating the methods or verbs that HTTP uses to receive
  * the Request and its respective Response.
  */
-router.get('/', getAllUsersController);
+router.get('/', verifyToken,getAllUsersController);
 router.post('/create', createUserController);
-router.get('/:email/detail', getUserByEmailController);
-router.put('/:email/update', updateUserByEmailController);
-router.delete('/:email/delete', deleteUserByEmailController);
+router.get('/:email/detail',verifyToken, getUserByEmailController);
+router.put('/:email/update', verifyToken,updateUserByEmailController);
+router.delete('/:email/delete', verifyToken,deleteUserByEmailController);
 
 module.exports = router;

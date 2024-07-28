@@ -5,12 +5,12 @@ const logger = require('morgan');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
-//const authRouter = require('./routes/auth');
+const authRouter = require('./routes/authentication');
 
 const baseApiPath =  "/api/";
 const apiVersion = "v1";
 const usersPath = "/users";
-//const authPath = "/auth";
+const authPath = "/auth";
 
 const app = express();
 
@@ -22,6 +22,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use(baseApiPath + apiVersion + usersPath, usersRouter);
-//app.use(baseApiPath + apiVersion + authPath, authRouter);
+app.use(baseApiPath + apiVersion + authPath, authRouter);
 
 module.exports = app;
