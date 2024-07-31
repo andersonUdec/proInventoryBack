@@ -1,7 +1,7 @@
 const db = require('../config/db');
 const User = db.User;
 const enumStatus = require('../enumerators/enumStatus');
-
+const helpers = require('../helpers/helpers');
 /**
  * @method
  * @description This method use for get all list of users
@@ -52,6 +52,7 @@ const createUserService = async function (userParam, next) {
         }
 
         const user = new User(userParam);
+        user.password = helpers.encodeBase64(user.password);
         user.status = enumStatus.ACTIVE;
         const savedUser = await user.save();
         return savedUser._id;
@@ -66,7 +67,7 @@ const createUserService = async function (userParam, next) {
 /**
  * @method
  * @description This method use for get user by email, and receive email object
- * @param email lmedy23w@gesties.com
+ * @param email example@yopmail.com
  * @returns {Promise<*>}
  */
 const getUserByEmailService = async function (email) {

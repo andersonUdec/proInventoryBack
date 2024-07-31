@@ -4,10 +4,11 @@ const config = require('../middlewares/config.json');
 const db = require('../config/db');
 const User = db.User;
 const enumStatus = require('../enumerators/enumStatus')
+const helpers = require('../helpers/helpers');
 
 const login = async function (email, password){
   try {
-    const userAuth =  await User.findOne({email: email, password: password, status: enumStatus.ACTIVE});
+    const userAuth =  await User.findOne({email: email, password: helpers.encodeBase64(password), status: enumStatus.ACTIVE});
     if(!userAuth){
       throw { code: 404, message: 'Lo sentimos, correo electrónico o contraseña incorrectos.'};
     }

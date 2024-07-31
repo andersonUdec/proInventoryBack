@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema({
-  email: { type: String, required: true },
-  document_id: { type: String, required: true },
+  email: { type: String, required: true},
+  document_id: { type: String, required: true},
   document_type: { type: Number, required: true },
   first_name: { type: String, required: true },
   last_name: { type: String, required: true },
-  phone: { type: String, required: true },
+  phone: { type: String, required: true},
   address: { type: String, required: true },
   status: { type: Number, required: false },
   password: { type: String, required: true }
