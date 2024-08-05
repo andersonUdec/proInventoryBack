@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const config = require("./config.json");
+require('dotenv').config();
 const app = require("../app");
 
 const verifyToken = (req, res, next) => {
@@ -10,7 +10,7 @@ const verifyToken = (req, res, next) => {
     if (parts) {
       if (parts && parts.length === 2) {
         const token = parts[1];
-        jwt.verify(token, config.secret, (err, decoded) => {
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
           if (decoded) {
             next();
           } else {

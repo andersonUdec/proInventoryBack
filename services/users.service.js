@@ -8,14 +8,14 @@ const helpers = require('../helpers/helpers');
  * @returns {Promise<*>}
  */
 const getAllUsersService = async function () {
-    try{
+    try {
         return await User
-        .find({status: enumStatus.ACTIVE})
-        .select('first_name last_name email phone id document_type document_id address')
-        .exec();
-    }catch (err) {
+            .find({ status: enumStatus.ACTIVE })
+            .select('first_name last_name email phone id document_type document_id address')
+            .exec();
+    } catch (err) {
         if (!err.code) {
-            throw {code: 500, message:  'Error interno del servidor. Por favor intenta nuevamente.'};
+            throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
         }
         throw err;
     }
@@ -41,13 +41,13 @@ const createUserService = async function (userParam, next) {
 
         if (existingUser) {
             if (existingUser.email === userParam.email) {
-                throw  {code: 409, message: 'Lo sentimos, el correo ya se encuentra registrado.'};
+                throw { code: 409, message: 'Lo sentimos, el correo ya se encuentra registrado.' };
             }
             if (existingUser.document_id === userParam.document_id) {
-                throw  {code: 409, message: 'Lo sentimos, el número de identificación ya se encuentra registrado.'};
+                throw { code: 409, message: 'Lo sentimos, el número de identificación ya se encuentra registrado.' };
             }
             if (existingUser.phone === userParam.phone) {
-                throw  {code: 409, message: 'Lo sentimos, el número telefónico ya se encuentra registrado.'};
+                throw { code: 409, message: 'Lo sentimos, el número telefónico ya se encuentra registrado.' };
             }
         }
 
@@ -58,7 +58,7 @@ const createUserService = async function (userParam, next) {
         return savedUser._id;
     } catch (err) {
         if (!err.code) {
-            throw {code: 500, message:  'Error interno del servidor. Por favor intenta nuevamente.'};
+            throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
         }
         throw err;
     }
@@ -71,13 +71,20 @@ const createUserService = async function (userParam, next) {
  * @returns {Promise<*>}
  */
 const getUserByEmailService = async function (email) {
-    const user = await User.findOne({ email: email, status: enumStatus.ACTIVE})
-        .select('first_name last_name email phone id document_type document_id address')
-        .exec();
-    if (!user) {
-        throw { code: 404, message: 'Lo sentimos, el usuario no existe.' };
+    try {
+        const user = await User.findOne({ email: email, status: enumStatus.ACTIVE })
+            .select('first_name last_name email phone id document_type document_id address')
+            .exec();
+        if (!user) {
+            throw { code: 404, message: 'Lo sentimos, el usuario no existe.' };
+        }
+        return user;
+    } catch (err) {
+        if (!err.code) {
+            throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
+        }
+        throw err;
     }
-    return user;
 };
 
 /**
@@ -88,26 +95,42 @@ const getUserByEmailService = async function (email) {
  * @returns {Promise<*>}
  */
 const updateUserByEmailService = async function (email, userParam) {
-    const userForUpdate = await User.findOne({ email: email, status: enumStatus.ACTIVE });
+    try {
+        const userForUpdate = await User.findOne({ email: email, status: enumStatus.ACTIVE });
 
-    if (!userForUpdate) {
-        throw { code: 404, message: 'Lo sentimos, el usuario no existe' };
+        if (!userForUpdate) {
+            throw { code: 404, message: 'Lo sentimos, el usuario no existe' };
+        }
+
+        const existingUser = await User.findOne({
+            phone: userParam.phone,
+            status: enumStatus.ACTIVE,
+            _id: { $ne: userForUpdate.id }
+        });
+        if (existingUser) {
+            throw { code: 409, message: 'Lo sentimos, el número telefónico ya se encuentra registrado.' };
+        }
+
+        const userUpdatedResult = await User
+            .findByIdAndUpdate(userForUpdate.id,
+                {
+                    first_name: userParam.first_name,
+                    last_name: userParam.last_name,
+                    phone: userParam.phone,
+                    address: userParam.address
+                });
+
+        if (userUpdatedResult && userUpdatedResult.errors) {
+            throw { code: 400, message: userUpdatedResult.errors };
+        }
+
+        return getUserByEmailService(userForUpdate.email);
+    } catch (err) {
+        if (!err.code) {
+            throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
+        }
+        throw err;
     }
-
-    const userUpdatedResult = await User
-        .findByIdAndUpdate(userForUpdate.id,
-            {
-                first_name: userParam.first_name,
-                last_name: userParam.last_name,
-                phone: userParam.phone,
-                address: userParam.address
-            });
-
-    if (userUpdatedResult && userUpdatedResult.errors) {
-        throw { code: 400, message: userUpdatedResult.errors };
-    }
-
-    return getUserByEmailService(userForUpdate.email);
 };
 
 /**
@@ -117,18 +140,25 @@ const updateUserByEmailService = async function (email, userParam) {
  * @returns {Promise<*>}
  */
 const deleteUserByEmailService = async function (email) {
-    const userForSoftDelete = await User.findOne({ email: email, status: enumStatus.ACTIVE });
+    try {
+        const userForSoftDelete = await User.findOne({ email: email, status: enumStatus.ACTIVE });
 
-    if (!userForSoftDelete) {
-        throw { code: 404, message: 'Lo sentimos, el usuario no existe.'};
-    }
+        if (!userForSoftDelete) {
+            throw { code: 404, message: 'Lo sentimos, el usuario no existe.' };
+        }
 
-    const userSoftDeleteResult = await User
-        .findByIdAndUpdate(userForSoftDelete.id,
-            { status: enumStatus.DELETE });
+        const userSoftDeleteResult = await User
+            .findByIdAndUpdate(userForSoftDelete.id,
+                { status: enumStatus.DELETE });
 
-    if (userSoftDeleteResult && userSoftDeleteResult.errors) {
-        throw { code: 400, message: userSoftDeleteResult.errors };
+        if (userSoftDeleteResult && userSoftDeleteResult.errors) {
+            throw { code: 400, message: userSoftDeleteResult.errors };
+        }
+    } catch (err) {
+        if (!err.code) {
+            throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
+        }
+        throw err;
     }
 };
 

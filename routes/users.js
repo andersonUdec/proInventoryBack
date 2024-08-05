@@ -20,7 +20,7 @@ const successModel = require('../models/internal/success.model');
 const getAllUsersController = async function (req, res, next) {
   await userServices.getAllUsersService()
     .then(users => res.status(200).json(new successModel(200, null, users)))
-    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
+    .catch(err => res.status(err.code).json(err.message));;
 };
 
 /**
@@ -34,7 +34,7 @@ const getAllUsersController = async function (req, res, next) {
 const createUserController = async function (req, res, next) {
   await userServices.createUserService(req.body)
     .then(user => res.status(201).json(new successModel(201, 'Usuario creado correctamente.', user)))
-    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
+    .catch(err => res.status(err.code).json(err.message));
 };
 
 /**
@@ -48,7 +48,7 @@ const createUserController = async function (req, res, next) {
 const getUserByEmailController = async function (req, res, next) {
   await userServices.getUserByEmailService(req.params.email)
     .then(user => res.status(200).json(new successModel(200, null, user)))
-    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
+    .catch(err => res.status(err.code).json(err.message));
 };
 
 /**
@@ -59,10 +59,10 @@ const getUserByEmailController = async function (req, res, next) {
  * @param res
  * @param next
  */
-const updateUserByEmailController = async function (req, res) {
+const updateUserByEmailController = async function (req, res, next) {
   await userServices.updateUserByEmailService(req.params.email, req.body)
     .then(user => res.status(200).json(new successModel(200, 'Usuario editado correctamente.', user)))
-    .catch(err => next(JSON.stringify(err)));
+    .catch(err => res.status(err.code).json(err.message));
 };
 
 /**
@@ -76,7 +76,7 @@ const updateUserByEmailController = async function (req, res) {
 const deleteUserByEmailController = async function (req, res, next) {
   await userServices.deleteUserByEmailService(req.params.email)
     .then(() => res.sendStatus(204))
-    .catch(err => next(JSON.stringify(new errorModel(err.code || 500, err.message || 'Error interno del servidor.'))));
+    .catch(err => res.status(err.code).json(err.message));
 };
 
 /**

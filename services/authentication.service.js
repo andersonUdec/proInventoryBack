@@ -1,6 +1,6 @@
 const Promise = require('bluebird');
 var jwt = require('jsonwebtoken');
-const config = require('../middlewares/config.json');
+require('dotenv').config();
 const db = require('../config/db');
 const User = db.User;
 const enumStatus = require('../enumerators/enumStatus')
@@ -19,7 +19,7 @@ const login = async function (email, password){
         last_name: userAuth.last_name,
         phone: userAuth.phone
       },
-      config.secret,
+      process.env.JWT_SECRET,
       {expiresIn: '1h'}
     );
     return Promise.resolve(token)
@@ -41,7 +41,7 @@ const logout = async function (email, date) {
         last_name: userAuth.last_name,
         phone: userAuth.phone
       },
-      config.secret,
+      process.env.JWT_SECRET,
       {expiresIn: '1h'}
     );
     return Promise.resolve(token)
