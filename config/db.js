@@ -16,4 +16,5 @@ main()
 
 module.exports = {
   User: require('../models/users.model'),
+  Product: require('../models/products.model')
 };

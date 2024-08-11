@@ -55,7 +55,7 @@ const createUserService = async function (userParam, next) {
         user.password = helpers.encodeBase64(user.password);
         user.status = enumStatus.ACTIVE;
         const savedUser = await user.save();
-        return savedUser._id;
+        return savedUser.id;
     } catch (err) {
         if (!err.code) {
             throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
@@ -99,7 +99,7 @@ const updateUserByEmailService = async function (email, userParam) {
         const userForUpdate = await User.findOne({ email: email, status: enumStatus.ACTIVE });
 
         if (!userForUpdate) {
-            throw { code: 404, message: 'Lo sentimos, el usuario no existe' };
+            throw { code: 404, message: 'Lo sentimos, el usuario no existe.' };
         }
 
         const existingUser = await User.findOne({
@@ -162,6 +162,58 @@ const deleteUserByEmailService = async function (email) {
     }
 };
 
+
+/**
+ * @method
+ * @description This method use for update user by email, and receive email object
+ * @param email
+ * @param userParam
+ * @returns {Promise<*>}
+ */
+const updateUserPasswordByEmailService = async function (email, userParam) {
+    try {
+        const userForUpdate = await User.findOne({ email: email, status: enumStatus.ACTIVE });
+        if (!userForUpdate) {
+            throw { code: 404, message: 'Lo sentimos, el usuario no existe.' };
+        }
+
+        const existingUserOldPassword = await User.findOne({
+            password: helpers.encodeBase64(userParam.passwordOld),
+            status: enumStatus.ACTIVE,
+            _id: userForUpdate.id   
+        });
+        if (!existingUserOldPassword) {
+            throw { code: 409, message: 'Lo sentimos, la contraseña anterior no corresponde con la actual.' };
+        }
+
+        const existingUserNewPassword = await User.findOne({
+            password: helpers.encodeBase64(userParam.passwordNew),
+            status: enumStatus.ACTIVE,
+            _id: userForUpdate.id
+        });
+        if (existingUserNewPassword) {
+            throw { code: 409, message: 'Lo sentimos, la nueva contraseña no puede ser identica a la actual.' };
+        }
+
+        const userUpdatedResult = await User
+            .findByIdAndUpdate(userForUpdate.id,
+                {
+                    password: helpers.encodeBase64(userParam.passwordNew)
+                });
+
+        if (userUpdatedResult && userUpdatedResult.errors) {
+            throw { code: 400, message: userUpdatedResult.errors };
+        }
+
+        return getUserByEmailService(userForUpdate.email);
+    } catch (err) {
+        if (!err.code) {
+            throw { code: 500, message: 'Error interno del servidor. Por favor intenta nuevamente.' };
+        }
+        throw err;
+    }
+};
+
 /**
  * @description Export services for use in the controller or routes * @type {{getUserByEmail: (function(*): Promise),
  * getAllUsers: (function(): Promise),
@@ -176,4 +228,5 @@ module.exports = {
     getUserByEmailService,
     updateUserByEmailService,
     deleteUserByEmailService,
+    updateUserPasswordByEmailService
 };

@@ -6,11 +6,13 @@ const cors = require('cors');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/authentication');
+const productRouter = require('./routes/products');
 
 const baseApiPath =  "/api/";
 const apiVersion = "v1";
 const usersPath = "/users";
 const authPath = "/auth";
+const productPath = "/products";
 
 const app = express();
 app.use(cors());
@@ -23,5 +25,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use(baseApiPath + apiVersion + usersPath, usersRouter);
 app.use(baseApiPath + apiVersion + authPath, authRouter);
+app.use(baseApiPath + apiVersion + productPath, productRouter);
 
 module.exports = app;

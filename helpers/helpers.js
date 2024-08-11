@@ -6,6 +6,14 @@ const encodeBase64 = word => {
     return encodedStringBtoA;
 };
 
+const decodeBase64 = word => {
+    let decodedStringAtob = undefined;
+    if (word !== null && word !== undefined && word.length > 0) {
+        decodedStringAtob = atob(word);
+    }
+    return decodedStringAtob;
+};
+
 const wordToCapitalize = words => {
     if (words !== null && words !== undefined && words.length > 0) {
         return words.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');

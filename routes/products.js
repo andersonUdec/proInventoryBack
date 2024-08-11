@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const userServices = require('../services/users.service');
+const productService = require('../services/products.service');
 const verifyToken = require('../middlewares/authMiddleware');
 
 const successModel = require('../models/internal/success.model');
@@ -16,9 +16,9 @@ const successModel = require('../models/internal/success.model');
  * @param res
  * @param next
  */
-const getAllUsersController = async function (req, res, next) {
-  await userServices.getAllUsersService()
-    .then(users => res.status(200).json(new successModel(200, null, users)))
+const getAllProductsController = async function (req, res, next) {
+  await productService.getAllProductsService()
+    .then(products => res.status(200).json(new successModel(200, null, products)))
     .catch(err => res.status(err.code).json(err.message));;
 };
 
@@ -31,8 +31,8 @@ const getAllUsersController = async function (req, res, next) {
  * @param next
  */
 const createUserController = async function (req, res, next) {
-  await userServices.createUserService(req.body)
-    .then(user => res.status(201).json(new successModel(201, 'Usuario creado correctamente.', user)))
+  await productService.createProductService(req.body)
+    .then(product => res.status(201).json(new successModel(201, 'Producto creado correctamente.', product)))
     .catch(err => res.status(err.code).json(err.message));
 };
 
@@ -44,11 +44,12 @@ const createUserController = async function (req, res, next) {
  * @param res
  * @param next
  */
-const getUserByEmailController = async function (req, res, next) {
-  await userServices.getUserByEmailService(req.params.email)
-    .then(user => res.status(200).json(new successModel(200, null, user)))
+const getProductBySkuController = async function (req, res, next) {
+  await productService.getProductBySkuService(req.params.sku)
+    .then(product => res.status(200).json(new successModel(200, null, product)))
     .catch(err => res.status(err.code).json(err.message));
 };
+
 
 /**
  * @method
@@ -58,11 +59,12 @@ const getUserByEmailController = async function (req, res, next) {
  * @param res
  * @param next
  */
-const updateUserByEmailController = async function (req, res, next) {
-  await userServices.updateUserByEmailService(req.params.email, req.body)
-    .then(user => res.status(200).json(new successModel(200, 'Usuario editado correctamente.', user)))
+const updateProductBySkuController = async function (req, res, next) {
+  await productService.updateProductBySkuService(req.params.sku, req.body)
+    .then(product => res.status(200).json(new successModel(200, 'Producto editado correctamente.', product)))
     .catch(err => res.status(err.code).json(err.message));
 };
+
 
 /**
  * @method
@@ -72,23 +74,9 @@ const updateUserByEmailController = async function (req, res, next) {
  * @param res
  * @param next
  */
-const deleteUserByEmailController = async function (req, res, next) {
-  await userServices.deleteUserByEmailService(req.params.email)
+const deleteProductByskuController = async function (req, res, next) {
+  await productService.deleteProductBySkuService(req.params.sku)
     .then(() => res.sendStatus(204))
-    .catch(err => res.status(err.code).json(err.message));
-};
-
-/**
- * @method
- * @description This method use with receive an email and body request HTTP PUT through middleware
- * from Node.JS and expressJS and response object Request. Use method or verb PUT
- * @param req
- * @param res
- * @param next
- */
-const updateUserPasswordByEmailController = async function (req, res, next) {
-  await userServices.updateUserPasswordByEmailService(req.params.email, req.body)
-    .then(user => res.status(200).json(new successModel(200, 'Contraseña actualizada correctamente.', user)))
     .catch(err => res.status(err.code).json(err.message));
 };
 
@@ -96,11 +84,10 @@ const updateUserPasswordByEmailController = async function (req, res, next) {
  * @description This definition section is responsible for indicating the methods or verbs that HTTP uses to receive
  * the Request and its respective Response.
  */
-router.get('/', verifyToken,getAllUsersController);
-router.post('/create', createUserController);
-router.get('/:email/detail',verifyToken, getUserByEmailController);
-router.put('/:email/update', verifyToken,updateUserByEmailController);
-router.delete('/:email/delete', verifyToken,deleteUserByEmailController);
-router.put('/:email/updatePassword', verifyToken,updateUserPasswordByEmailController);
+router.get('/', verifyToken, getAllProductsController);
+router.post('/create',verifyToken, createUserController);
+router.get('/:sku/detail',verifyToken, getProductBySkuController);
+router.put('/:sku/update', verifyToken,updateProductBySkuController);
+router.delete('/:sku/delete', verifyToken,deleteProductByskuController);
 
 module.exports = router;
